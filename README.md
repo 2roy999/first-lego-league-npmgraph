@@ -1,7 +1,10 @@
-# NPMGraph
+# _FIRST_ LEGO League NPMGraph
 
 
-A tool for exploring NPM modules and dependencies.  Available online at http://npm.broofa.com/.
+A tool for exploring NPM modules and dependencies for the scope @first-lego-league.
+Available online at https://2roy999.github.io/first-lego-league-npmgraph/index.html.
+
+Mainly based on http://npm.broofa.com/. 
 
 ![image](https://user-images.githubusercontent.com/164050/31836231-6ab6faca-b589-11e7-9bb9-00ee0b8d90b4.png)
 
