@@ -16,7 +16,7 @@ export default class Store {
   static init() {
     this._inflight = {};
     this._moduleCache = {};
-    this._noCache = /noCache/i.test(location.search);
+    this._noCache = true;
   }
 
   // GET package info

@@ -208,9 +208,7 @@ body.open #inspector {
 svg {
   fill: #666;
 }
-g .node * {
-  cursor: pointer;
-}
+
 g .node polygon,
 g .node path {
   fill: white;

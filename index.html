@@ -33,7 +33,7 @@
     <link href="./index.css" rel="stylesheet" />
   </head>
 
-  <body class="open">
+  <body>
     <div id="graph"></div>
     <div id="progress" style="display:none">
       <h2>Loading module dependencies</h2>
@@ -43,67 +43,6 @@
       <button id="zoomWidthButton" title="fit width" class="material-icons">swap_horiz</button>
       <button id="zoomDefaultButton" title="1x" class="material-icons">search</button>
       <button id="zoomHeightButton" title="fit height" class="material-icons">swap_vert</button>
-    </div>
-
-    <div id="inspector">
-      <div id="tabs">
-        <div class="arrow" id="toggleInspectorButton">&#x25c0</div>
-        <div class="button" data-pane="pane-module">Module</div>
-        <div class="button" data-pane="pane-graph">Graph</div>
-        <div class="button active" data-pane="pane-info">&#9432;</div>
-        <input type="text" id="searchText" placeholder="&#x1F50D; &nbsp;Enter module name" />
-      </div>
-
-      <div class="pane" id="pane-graph">
-        <section>
-          <h2>Tools<span class="material-icons"></span></h2>
-          <label><input type="checkbox" id="colorize" />Colorize by <a href="https://github.com/npms-io/npms-analyzer" target="_blank">npms.io score</a></label>
-        </section>
-        <section class="dependencies">
-          <h2>Dependencies<span class="material-icons"></span></h2>
-        </section>
-        <section class="maintainers">
-          <h2>Maintainers<span class="material-icons"></span></h2>
-        </section>
-        <section>
-          <h2>Licenses<span class="material-icons"></span></h2>
-          <div class="licenses"></div>
-          <div id="chart">
-          </div>
-        </section>
-      </div>
-
-      <div class="pane" id="pane-module">
-        <h2>Module</h2>
-        <section class="description">
-          <h2>Description<span class="material-icons"></span></h2>
-        </section>
-        <section class="stats">
-          <h2>Stats<span class="material-icons"></span></h2>
-        </section>
-        <section>
-          <h2>package.json<span class="material-icons"></span></h2>
-          <pre class="json"></pre>
-        </section>
-      </div>
-
-      <div class="pane open" id="pane-info">
-        <p>
-        Enter NPM module name here <i class="material-icons">arrow_upward</i> to see the dependency graph.  To graph multiple modules separate names with commas (e.g. <a href="?q=mocha, chalk, rimraf">"mocha, chalk, rimraf"</a>).
-        </p>
-        <div id="drop_target" style="text-align: center">
-					... or drop a <code>package.json</code> file here
-				</div>
-        <div id="info-footer">
-          <div id="copyright">
-            &copy; Robert Kieffer, 2017  MIT License
-            <a id="github" target="_blank" href="https://github.com/broofa/npmgraph">GitHub</a>
-          </div>
-          <div id="dev-controls">
-            LocalStorage: <span id="storage"></span> <button id="clearButton">Clear</button>
-          </div>
-        </div>
-      </div>
     </div>
 
     <div id="errlog" />

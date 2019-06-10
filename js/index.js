@@ -1,10 +1,9 @@
-/* global Viz, gtag, GA_TRACKING_ID */
+/* global Viz */
 
 import Flash from './Flash.js';
-import Inspector from './Inspector.js';
-import Module from './Module.js';
 import Store from './Store.js';
-import {$, $$, tagElement, ajax, entryFromKey, report} from './util.js';
+import {$, $$, tagElement, entryFromKey, report} from './util.js';
+import {isInScope, startingModules} from './scope.js';
 
 // HACK: So we can call closest() on event targets without having to worry about
 // whether or not the user clicked on an Element v. Text Node
@@ -24,22 +23,6 @@ window.addEventListener('unhandledrejection', err => {
   console.error(err);
   Flash(err.reason);
 });
-
-async function handleGraphClick(event) {
-  const el = $.up(event.srcElement, e => e.classList.contains('node'));
-  Inspector.selectTag(el);
-  if (el) {
-    const moduleKey = el.textContent.trim();
-    const module = await Store.getModule(...entryFromKey(moduleKey));
-    if (module) {
-      Inspector.setModule(module);
-      Inspector.showPane('pane-module');
-      Inspector.toggle(true);
-      return;
-    }
-  }
-  Inspector.toggle(false);
-}
 
 function zoom(op) {
   const svg = $('svg');
@@ -65,9 +48,7 @@ function zoom(op) {
   }
 }
 
-async function graph(module) {
-  Inspector.toggle(false);
-
+async function graph() {
   // Clear out graphs
   $$('svg').forEach(el => el.remove());
 
@@ -86,54 +67,49 @@ async function graph(module) {
     if (m.key in seen) return;
     seen[m.key] = true;
 
-    nodes.push(`"${m}"`);
+    if (isInScope(m)) {
+      nodes.push(`"${m}"`);
 
-    const deps = m.package.dependencies;
-    if (deps) {
-      const renderP = [];
-      for (const dep in deps) {
-        renderP.push(Store.getModule(dep, deps[dep])
-          .then(dst => {
-            edges.push(`"${m}" -> "${dst}"`);
-            return render(dst);
-          })
-        );
+      const deps = {
+        ...m.package.dependencies,
+        ...m.package.devDependencies,
+        ...m.package.peerDependencies
+      };
+      if (deps) {
+        const renderP = [];
+        for (const dep in deps) {
+          renderP.push(Store.getModule(dep, deps[dep])
+            .then(dst => {
+              if (isInScope(dst)) {
+                edges.push(`"${m}" -> "${dst}"`);
+                return render(dst);
+              }
+            })
+          );
+        }
+
+        return Promise.all(renderP);
       }
-
-      return Promise.all(renderP);
     }
 
     return Promise.resolve();
   }
 
   $('#progress').style.display = 'block';
-  let modules = module;
-  if (typeof(module) == 'string') {
-    modules = module.split(/[, ]+/);
-    modules.sort();
+  let modules = startingModules;
+  modules.sort();
 
-    // Because this is a single-page app that relies on other servers to do most
-    // of the heavy lifting (e.g. npmjs.cl, npmjs.org), my weblogs don't actually
-    // contain info about the modules people are graphing.  Because that
-    // information is kind of interesting, we make a tracking request here to
-    // capture that info.
-    if (location.hostname == 'npm.broofa.com') ajax('GET', `/track.php?q=${modules.join()}`);
-
-    modules = await Promise.all(modules.map(moduleName =>
-      Store.getModule(...entryFromKey(moduleName))
-    ));
-  } else {
-    modules = [module];
-  }
+  modules = await Promise.all(modules.map(moduleName =>
+    Store.getModule(...entryFromKey(moduleName))
+  ));
   await render(modules);
   $('#progress').style.display = 'none';
 
-  const title = modules.map(m => m.package.name).join();
   const dotDoc = [
     'digraph {',
     'rankdir="LR"',
     'labelloc="t"',
-    `label="${title}"`,
+    'label="@first-lego-league package dependency"',
     '// Default styles',
     `graph [fontsize=16 fontname="${FONT}"]`,
     `node [shape=box style=rounded fontname="${FONT}" fontsize=11 height=0 width=0 margin=.04]`,
@@ -142,11 +118,11 @@ async function graph(module) {
   ]
     .concat(nodes)
     .concat(edges)
-    .concat(
-      modules.length > 1 ?
-        `{rank=same; ${modules.map(s => `"${s}"`).join('; ')};}` :
-        ''
-    )
+    // .concat(
+    //   modules.length > 1 ?
+    //     `{rank=same; ${modules.map(s => `"${s}"`).join('; ')};}` :
+    //     ''
+    // )
     .concat('}')
     .join('\n');
 
@@ -162,7 +138,6 @@ async function graph(module) {
   // the svg DOM a bit, so we parse it into a DOMFragment and then add it.
   const svg = new DOMParser().parseFromString(dot, 'text/html').querySelector('svg');
   svg.querySelectorAll('g title').forEach(el => el.remove());
-  svg.addEventListener('click', handleGraphClick);
 
   // Round up viewbox
   svg.setAttribute('viewBox', svg.getAttribute('viewBox').split(' ').map(Math.ceil).join(' '));
@@ -192,11 +167,6 @@ async function graph(module) {
     }
   });
 
-  Inspector.setGraph(modules);
-  Inspector.setModule(modules);
-  Inspector.showPane('pane-graph');
-  Inspector.toggle(true);
-
   const names = modules.map(m => m.package.name).join(', ');
   $('title').innerText = `NPMGraph - ${names}`;
 }
@@ -213,19 +183,8 @@ window.onpopstate = function(event) {
 
 onload = function() {
   $$('#tabs .button').forEach((button, i) => {
-    button.onclick = () => Inspector.showPane(button.getAttribute('data-pane'));
     if (!i) button.onclick();
   });
-
-  $('#clearButton').onclick = Store.clear;
-  $('#toggleInspectorButton').onclick = Inspector.toggle;
-  $('#searchText').onchange = async function() {
-    const noCache = /noCache/i.test(location.search);
-    const url = `${location.pathname}?q=${this.value}`;
-    history.pushState({}, null, `${url}${noCache ? '&noCache' : ''}`);
-    gtag('config', GA_TRACKING_ID, {page_path: url}); // eslint-disable-line camelcase
-    await graph(this.value);
-  };
 
   $$('section > h2').forEach(el => {
     el.onclick = () => el.closest('section').classList.toggle('closed');
@@ -236,55 +195,11 @@ onload = function() {
   $('#zoomHeightButton').onclick = () => zoom(2);
 
   Store.init();
-  Inspector.init();
-  Inspector.showPane('pane-info');
-
-  // Handle file drops
-  Object.assign($('#drop_target'), {
-    ondrop: async ev => {
-      ev.target.classList.remove('drag');
-      ev.preventDefault();
-
-      // If dropped items aren't files, reject them
-      const dt = ev.dataTransfer;
-      if (!dt.items) return alert('Sorry, file dropping is not supported by this browser');
-      if (dt.items.length != 1) return alert('You must drop exactly one file');
-
-      const item = dt.items[0];
-      if (item.type && item.type != 'application/json') return alert('File must have a ".json" extension');
-
-      const file = item.getAsFile();
-      if (!file) return alert('Please drop a file, not... well... whatever else it was you dropped');
-
-      const reader = new FileReader();
-
-      const content = await new Promise((resolve, reject) => {
-        reader.onload = () => resolve(reader.result);
-        reader.readAsText(file);
-      });
-
-      const module = new Module(JSON.parse(content));
-      history.pushState({module}, null, `${location.pathname}?upload=${file.name}`);
-      graph(module);
-    },
-
-    ondragover: ev => {
-      ev.target.classList.add('drag');
-      ev.preventDefault();
-    },
-
-    ondragleave: ev => {
-      ev.currentTarget.classList.remove('drag');
-      ev.preventDefault();
-    }
-  });
 
   // Show storage
   let chars = 0;
   const ls = localStorage;
   for (let i = 0; i < ls.length; i++) chars += ls.getItem(ls.key(i)).length;
-  $('#storage').innerText = `${chars} chars`;
-  $('#tabs input').focus();
 
   onpopstate();
 };
