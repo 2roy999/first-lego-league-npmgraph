@@ -174,11 +174,10 @@ async function graph() {
 window.onpopstate = function(event) {
   const state = event && event.state;
   if (state && state.module) {
-    graph(state.module);
+    graph();
     return;
   }
-  const target = /q=([^&]+)/.test(location.search) && RegExp.$1;
-  if (target) graph(decodeURIComponent(target) || 'request');
+  graph();
 };
 
 onload = function() {
