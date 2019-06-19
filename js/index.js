@@ -57,6 +57,7 @@ async function graph() {
   // Compose directed graph document (GraphViz notation)
   const nodes = ['\n// Nodes & per-node styling'];
   const edges = ['\n// Edges & per-edge styling'];
+  const refed = {};
 
   const seen = {};
   function render(m) {
@@ -78,13 +79,22 @@ async function graph() {
       if (deps) {
         const renderP = [];
         for (const dep in deps) {
-          renderP.push(Store.getModule(dep, deps[dep])
-            .then(dst => {
-              if (isInScope(dst)) {
-                edges.push(`"${m}" -> "${dst}"`);
-                return render(dst);
-              }
-            })
+          renderP.push(
+            Store.getModule(dep, deps[dep])
+              .then(dst => {
+                refed[dst.key] = true
+
+                if (isInScope(dst)) {
+                  edges.push(`"${m}" -> "${dst}"`);
+                  return render(dst);
+                }
+              }),
+            Store.getModule(dep)
+              .then(dst => {
+                if (isInScope(dst)) {
+                  return render(dst);
+                }
+              })
           );
         }
 
@@ -102,6 +112,7 @@ async function graph() {
   modules = await Promise.all(modules.map(moduleName =>
     Store.getModule(...entryFromKey(moduleName))
   ));
+  modules.forEach(m => { refed[m.key] = true })
   await render(modules);
   $('#progress').style.display = 'none';
 
@@ -162,6 +173,10 @@ async function graph() {
     if (pkg.stub) {
       el.classList.add('stub');
     } else {
+      if (!refed[m.key]) {
+        el.classList.add('unref');
+      }
+
       tagElement(el, 'maintainer', ...pkg.maintainers.map(m => m.name));
       tagElement(el, 'license', m.licenseString || 'Unspecified');
     }

@@ -225,6 +225,11 @@ g .stub > path {
   stroke: #666;
 }
 
+g .unref > polygon,
+g .unref > path {
+  stroke: red;
+}
+
 #drop_target {
   background-color: #ddd;
   border: dashed 2px #888;

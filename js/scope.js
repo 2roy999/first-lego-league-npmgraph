@@ -5,9 +5,8 @@ export function isInScope(m) {
 }
 
 export const startingModules = [
-  '@first-lego-league/clock',
-  '@first-lego-league/dev-launcher',
-  '@first-lego-league/display',
+  '@first-lego-league/clock@2.4.2',
+  '@first-lego-league/display@2.4.3',
   // '@first-lego-league/display-system',
   // '@first-lego-league/eslint-config',
   // '@first-lego-league/fllscoring',
@@ -20,8 +19,8 @@ export const startingModules = [
   // '@first-lego-league/ms-logger',
   // '@first-lego-league/ms-messenger',
   // '@first-lego-league/protocols',
-  '@first-lego-league/scoring',
-  '@first-lego-league/tournament',
-  '@first-lego-league/tournament-status',
+  '@first-lego-league/scoring@2.3.8',
+  '@first-lego-league/tournament@2.0.2',
+  '@first-lego-league/tournament-status@1.0.1',
   // '@first-lego-league/user-interface'
 ];

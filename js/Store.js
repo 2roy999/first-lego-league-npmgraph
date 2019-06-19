@@ -86,10 +86,10 @@ export default class Store {
       if (!issues.valid) console.log(module.key, issues);
       */
 
-      this._moduleCache[cachePath] = this._moduleCache[path] = module;
+      this._moduleCache[cachePath] = module;
     }
 
-    return this._moduleCache[path];
+    return this._moduleCache[cachePath];
   }
 
   // GET url, caching results in localStorage
