@@ -225,9 +225,9 @@ g .stub > path {
   stroke: #666;
 }
 
-g .unref > polygon,
-g .unref > path {
-  stroke: red;
+g .latest > polygon,
+g .latest > path {
+  fill: lightcoral;
 }
 
 #drop_target {

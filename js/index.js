@@ -57,7 +57,7 @@ async function graph() {
   // Compose directed graph document (GraphViz notation)
   const nodes = ['\n// Nodes & per-node styling'];
   const edges = ['\n// Edges & per-edge styling'];
-  const refed = {};
+  const latest = {};
 
   const seen = {};
   function render(m) {
@@ -82,8 +82,6 @@ async function graph() {
           renderP.push(
             Store.getModule(dep, deps[dep])
               .then(dst => {
-                refed[dst.key] = true
-
                 if (isInScope(dst)) {
                   edges.push(`"${m}" -> "${dst}"`);
                   return render(dst);
@@ -92,6 +90,7 @@ async function graph() {
             Store.getModule(dep)
               .then(dst => {
                 if (isInScope(dst)) {
+                  latest[dst.key] = true;
                   return render(dst);
                 }
               })
@@ -112,7 +111,7 @@ async function graph() {
   modules = await Promise.all(modules.map(moduleName =>
     Store.getModule(...entryFromKey(moduleName))
   ));
-  modules.forEach(m => { refed[m.key] = true })
+  modules.forEach(m => { latest[m.key] = true })
   await render(modules);
   $('#progress').style.display = 'none';
 
@@ -173,8 +172,8 @@ async function graph() {
     if (pkg.stub) {
       el.classList.add('stub');
     } else {
-      if (!refed[m.key]) {
-        el.classList.add('unref');
+      if (!latest[m.key]) {
+        el.classList.add('latest');
       }
 
       tagElement(el, 'maintainer', ...pkg.maintainers.map(m => m.name));

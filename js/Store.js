@@ -28,7 +28,7 @@ export default class Store {
 
     // If semver isn't valid (i.e. not a simple, canonical version - e.g.
     // "1.2.3") fetch all versions (we'll figure out the specific version below)
-    const cachePath = semver.valid(version) ? `${path}/${version}` : path;
+    const cachePath = `${path}/${version}`;
 
     if (!this._moduleCache[cachePath]) {
       let body;
